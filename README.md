@@ -131,7 +131,6 @@ git clone https://github.com/natasha-analytics/InsightQ.git
 ## 👩‍💻 Built By
 
 **Natasha Chatterji**
-B.Tech Data Science & Analytics — United University, Prayagraj
 [GitHub](https://github.com/natasha-analytics)
 
 ---
