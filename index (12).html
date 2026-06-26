@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>InsightIQ — AI Data Analyst</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--bg:#070a14;--card:#0f1224;--card2:#141830;--border:#1e2340;--accent:#6c63ff;--accent2:#00d4aa;--accent3:#f59e0b;--text:#f0f2ff;--muted:#6b7280;--danger:#ef4444;--success:#10b981;}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;}
+
+/* HEADER */
+header{background:linear-gradient(135deg,#0f1224,#1a1040,#0f1224);border-bottom:1px solid var(--border);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:200;backdrop-filter:blur(10px);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+.logo-text{font-size:20px;font-weight:800;background:linear-gradient(90deg,#a78bfa,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.badge{background:rgba(108,99,255,0.2);color:#a78bfa;border:1px solid rgba(108,99,255,0.4);border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;}
+
+/* LAYOUT */
+.app-layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 62px);}
+
+/* SIDEBAR */
+.sidebar{background:var(--card);border-right:1px solid var(--border);padding:16px 0;display:flex;flex-direction:column;}
+.upload-zone{margin:12px;background:rgba(108,99,255,0.05);border:2px dashed rgba(108,99,255,0.3);border-radius:12px;padding:16px;text-align:center;cursor:pointer;transition:all 0.2s;}
+.upload-zone:hover{border-color:var(--accent);background:rgba(108,99,255,0.1);}
+.upload-zone input{display:none;}
+.upload-icon{font-size:24px;margin-bottom:6px;}
+.upload-text{font-size:11px;color:var(--muted);}
+.upload-text span{color:var(--accent);font-weight:600;}
+.file-info{margin:0 12px 8px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px;display:none;}
+.file-name{font-size:11px;font-weight:600;color:var(--success);}
+.file-meta{font-size:10px;color:var(--muted);margin-top:2px;}
+.sidebar-divider{border:none;border-top:1px solid var(--border);margin:8px 12px;}
+.sidebar-label{color:var(--muted);font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:0 20px;margin-bottom:6px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 16px;cursor:pointer;font-size:13px;font-weight:500;color:#9ca3af;transition:all 0.2s;border-left:2px solid transparent;}
+.nav-item:hover{background:rgba(108,99,255,0.08);color:var(--text);}
+.nav-item.active{background:rgba(108,99,255,0.12);color:var(--text);border-left:2px solid var(--accent);}
+.nav-icon{font-size:15px;width:18px;text-align:center;}
+.setup-section{margin:8px 12px;}
+.setup-input{background:#070a14;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:11px;font-family:'Inter',sans-serif;outline:none;width:100%;margin-bottom:6px;}
+.setup-input:focus{border-color:var(--accent);}
+.save-btn{background:linear-gradient(135deg,var(--accent),#5a52d5);color:white;border:none;border-radius:8px;padding:8px;font-size:11px;font-weight:600;cursor:pointer;width:100%;font-family:'Inter',sans-serif;}
+
+/* MAIN */
+.main-content{padding:24px;overflow-y:auto;position:relative;}
+.page{display:none;}
+.page.active{display:block;}
+.page-header{margin-bottom:20px;}
+.page-title{font-size:20px;font-weight:700;margin-bottom:4px;}
+.page-subtitle{color:var(--muted);font-size:13px;}
+
+/* 5-STEP FLOW */
+.steps-container{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px;}
+.steps-header{font-size:15px;font-weight:600;margin-bottom:6px;}
+.steps-sub{color:var(--muted);font-size:12px;margin-bottom:20px;}
+.steps-track{display:flex;align-items:center;gap:0;margin-bottom:24px;overflow-x:auto;padding-bottom:4px;}
+.step-item{display:flex;flex-direction:column;align-items:center;flex:1;min-width:100px;cursor:pointer;position:relative;}
+.step-item:not(:last-child)::after{content:'';position:absolute;top:20px;left:60%;width:80%;height:2px;background:var(--border);z-index:0;}
+.step-item.done:not(:last-child)::after{background:var(--accent);}
+.step-circle{width:40px;height:40px;border-radius:50%;border:2px solid var(--border);background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:8px;transition:all 0.3s;position:relative;z-index:1;}
+.step-item.active .step-circle{border-color:var(--accent);background:rgba(108,99,255,0.2);box-shadow:0 0 16px rgba(108,99,255,0.4);}
+.step-item.done .step-circle{border-color:var(--success);background:rgba(16,185,129,0.2);}
+.step-label{font-size:11px;font-weight:600;color:var(--muted);text-align:center;}
+.step-item.active .step-label{color:var(--accent);}
+.step-item.done .step-label{color:var(--success);}
+.step-btn{background:linear-gradient(135deg,var(--accent),#5a52d5);color:white;border:none;border-radius:10px;padding:12px 24px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s;}
+.step-btn:hover{opacity:0.9;transform:translateY(-1px);}
+.step-btn:disabled{background:#1e2340;color:var(--muted);cursor:not-allowed;transform:none;}
+.step-btn.skip{background:transparent;border:1px solid var(--border);color:var(--muted);}
+.step-content{background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:20px;margin-top:16px;display:none;}
+.step-content.active{display:block;}
+.step-explanation{background:rgba(0,212,170,0.06);border:1px solid rgba(0,212,170,0.2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.7;color:#a7f3d0;}
+.step-explanation .exp-title{font-weight:700;color:var(--accent2);margin-bottom:6px;font-size:14px;}
+.step-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;}
+.step-result{background:#070a14;border:1px solid var(--border);border-radius:8px;padding:14px;font-size:13px;line-height:1.7;white-space:pre-wrap;color:#d1d5db;min-height:40px;}
+
+/* METRICS */
+.metrics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;}
+.metric-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px;}
+.metric-icon{font-size:20px;margin-bottom:6px;}
+.metric-value{font-size:24px;font-weight:800;margin-bottom:2px;}
+.metric-value.purple{color:#a78bfa;}
+.metric-value.teal{color:var(--accent2);}
+.metric-value.amber{color:var(--accent3);}
+.metric-value.red{color:var(--danger);}
+.metric-label{font-size:11px;color:var(--muted);}
+
+/* QUICK ACTIONS */
+.quick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:16px;}
+.quick-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all 0.2s;text-align:center;}
+.quick-card:hover{border-color:var(--accent);background:rgba(108,99,255,0.1);transform:translateY(-2px);}
+.quick-card-icon{font-size:20px;margin-bottom:6px;}
+.quick-card-label{font-size:11px;font-weight:500;color:#9ca3af;}
+
+/* CONTENT CARDS */
+.content-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:14px;}
+.card-title{font-size:14px;font-weight:600;margin-bottom:12px;}
+
+/* BUTTONS */
+.btn-primary{background:linear-gradient(135deg,var(--accent),#5a52d5);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.btn-success{background:rgba(16,185,129,0.15);color:var(--success);border:1px solid rgba(16,185,129,0.3);border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.btn-warning{background:rgba(245,158,11,0.15);color:var(--accent3);border:1px solid rgba(245,158,11,0.3);border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+.btn-danger{background:rgba(239,68,68,0.15);color:var(--danger);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:10px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;}
+
+/* ASK */
+.ask-row{display:flex;gap:10px;margin-bottom:12px;}
+.ask-input{flex:1;background:#070a14;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:10px 14px;font-size:13px;font-family:'Inter',sans-serif;outline:none;}
+.ask-input:focus{border-color:var(--accent);}
+.ask-btn{background:linear-gradient(135deg,var(--accent),#5a52d5);color:white;border:none;border-radius:8px;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}
+.ai-response{background:rgba(108,99,255,0.05);border:1px solid rgba(108,99,255,0.2);border-radius:10px;padding:16px;font-size:13px;line-height:1.8;white-space:pre-wrap;color:#d1d5db;min-height:30px;}
+.thinking{color:var(--accent2);font-size:13px;padding:8px 0;display:none;}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+.chip{background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);color:#a78bfa;padding:5px 12px;border-radius:20px;cursor:pointer;font-size:11px;font-family:'Inter',sans-serif;}
+.chip:hover{background:rgba(108,99,255,0.2);}
+
+/* TABLE */
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);}
+.data-table{width:100%;border-collapse:collapse;font-size:12px;}
+.data-table th{background:rgba(108,99,255,0.12);color:#a78bfa;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border);font-weight:600;white-space:nowrap;}
+.data-table td{padding:7px 12px;border-bottom:1px solid rgba(255,255,255,0.04);color:#9ca3af;}
+.data-table tr:hover td{background:rgba(255,255,255,0.02);}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;}
+.stat-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.stat-col{font-size:10px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;}
+.stat-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.stat-k{font-size:11px;color:var(--muted);}
+.stat-v{font-size:11px;font-weight:600;}
+
+/* QUALITY */
+.quality-item{display:flex;justify-content:space-between;align-items:center;padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;}
+.q-label{font-size:12px;font-weight:500;}
+.q-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;}
+.q-badge.ok{background:rgba(16,185,129,0.15);color:var(--success);}
+.q-badge.warn{background:rgba(239,68,68,0.15);color:var(--danger);}
+
+/* DASHBOARD GRID */
+.dash-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
+.dash-card{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:14px;}
+.dash-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;}
+
+/* MEMORY */
+.mem-item{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px;}
+.mem-q{color:var(--accent2);font-weight:600;font-size:12px;margin-bottom:4px;}
+.mem-a{color:#6b7280;font-size:11px;line-height:1.5;}
+.mem-t{color:#374151;font-size:10px;margin-top:4px;}
+
+/* AI CHAT BUBBLE */
+.chat-bubble{position:fixed;bottom:24px;right:24px;z-index:1000;}
+.chat-toggle{width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;cursor:pointer;font-size:22px;box-shadow:0 4px 20px rgba(108,99,255,0.4);display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.chat-toggle:hover{transform:scale(1.1);}
+.chat-window{position:absolute;bottom:64px;right:0;width:320px;background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 40px rgba(0,0,0,0.4);display:none;flex-direction:column;overflow:hidden;}
+.chat-window.open{display:flex;}
+.chat-header{background:linear-gradient(135deg,var(--accent),#5a52d5);padding:14px 16px;display:flex;align-items:center;gap:10px;}
+.chat-header-title{font-size:14px;font-weight:600;}
+.chat-header-sub{font-size:11px;opacity:0.8;}
+.chat-messages{padding:14px;max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;}
+.chat-msg{padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.6;max-width:90%;}
+.chat-msg.bot{background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.2);color:#d1d5db;align-self:flex-start;}
+.chat-msg.user{background:linear-gradient(135deg,var(--accent),#5a52d5);color:white;align-self:flex-end;}
+.chat-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border);}
+.chat-input{flex:1;background:#070a14;border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 10px;font-size:12px;font-family:'Inter',sans-serif;outline:none;}
+.chat-send{background:var(--accent);color:white;border:none;border-radius:8px;padding:8px 12px;cursor:pointer;font-size:14px;}
+.chat-suggestions{padding:0 12px 8px;display:flex;flex-wrap:wrap;gap:6px;}
+.chat-chip{background:rgba(108,99,255,0.1);border:1px solid rgba(108,99,255,0.3);color:#a78bfa;padding:4px 8px;border-radius:12px;cursor:pointer;font-size:10px;font-family:'Inter',sans-serif;}
+.chat-chip:hover{background:rgba(108,99,255,0.2);}
+
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-thumb{background:#1e2340;border-radius:2px;}
+footer{background:var(--card);border-top:1px solid var(--border);padding:12px 32px;text-align:center;color:var(--muted);font-size:11px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <span class="logo-text">InsightIQ</span>
+  </div>
+  <div class="header-right">
+    <span style="font-size:11px;color:var(--muted);" id="statusText">No file loaded</span>
+    <span class="badge">Quackathon 2026</span>
+  </div>
+</header>
+
+<div class="app-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="upload-zone" onclick="document.getElementById('csvFile').click()">
+      <input type="file" id="csvFile" accept=".csv"/>
+      <div class="upload-icon">📂</div>
+      <div class="upload-text"><span>Click to upload</span> CSV</div>
+    </div>
+    <div class="file-info" id="fileInfo">
+      <div class="file-name" id="fileName"></div>
+      <div class="file-meta" id="fileMeta"></div>
+    </div>
+    <hr class="sidebar-divider"/>
+    <div class="sidebar-label" style="margin-bottom:8px;">Navigation</div>
+    <div class="nav-item active" onclick="showPage('overview',this)"><span class="nav-icon">🏠</span>Overview</div>
+    <div class="nav-item" onclick="showPage('steps',this)"><span class="nav-icon">🎯</span>5-Step Analysis</div>
+    <div class="nav-item" onclick="showPage('dashboard',this)"><span class="nav-icon">📊</span>Dashboard</div>
+    <div class="nav-item" onclick="showPage('ask',this)"><span class="nav-icon">🤖</span>AI Insights</div>
+    <div class="nav-item" onclick="showPage('stats',this)"><span class="nav-icon">📈</span>Statistics</div>
+    <div class="nav-item" onclick="showPage('table',this)"><span class="nav-icon">🗂️</span>Data Table</div>
+    <div class="nav-item" onclick="showPage('quality',this)"><span class="nav-icon">🧹</span>Data Quality</div>
+    <div class="nav-item" onclick="showPage('charts',this)"><span class="nav-icon">📉</span>Charts</div>
+    <div class="nav-item" onclick="showPage('memory',this)"><span class="nav-icon">🧠</span>Memory (Parcle)</div>
+    <hr class="sidebar-divider"/>
+    <div class="sidebar-label" style="margin-bottom:8px;">Parcle Memory</div>
+    <div class="setup-section">
+      <input class="setup-input" type="text" id="parcleKey" placeholder="Parcle Key (pmem_...)"/>
+      <input class="setup-input" type="text" id="userId" placeholder="Your name"/>
+      <button class="save-btn" onclick="saveKeys()">Connect Parcle 🧠</button>
+      <div id="keyStatus" style="font-size:10px;margin-top:4px;"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-content">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="page-header">
+        <div class="page-title">👋 Welcome to InsightIQ</div>
+        <div class="page-subtitle">Professional AI-powered CSV Data Analyst — No SQL, No Power BI needed!</div>
+      </div>
+      <div class="metrics-grid">
+        <div class="metric-card"><div class="metric-icon">📋</div><div class="metric-value purple" id="m-rows">—</div><div class="metric-label">Total Rows</div></div>
+        <div class="metric-card"><div class="metric-icon">📊</div><div class="metric-value teal" id="m-cols">—</div><div class="metric-label">Columns</div></div>
+        <div class="metric-card"><div class="metric-icon">⚠️</div><div class="metric-value amber" id="m-missing">—</div><div class="metric-label">Missing Values</div></div>
+        <div class="metric-card"><div class="metric-icon">🔄</div><div class="metric-value red" id="m-dups">—</div><div class="metric-label">Duplicates</div></div>
+      </div>
+      <div class="content-card">
+        <div class="card-title">⚡ Quick Actions</div>
+        <div class="quick-grid">
+          <div class="quick-card" onclick="quickAct('Summarize this dataset')"><div class="quick-card-icon">📋</div><div class="quick-card-label">Summarize</div></div>
+          <div class="quick-card" onclick="quickAct('What are the key trends?')"><div class="quick-card-icon">📈</div><div class="quick-card-label">Find Trends</div></div>
+          <div class="quick-card" onclick="quickAct('Which values are highest?')"><div class="quick-card-icon">🏆</div><div class="quick-card-label">Top Values</div></div>
+          <div class="quick-card" onclick="quickAct('Are there anomalies?')"><div class="quick-card-icon">⚠️</div><div class="quick-card-label">Anomalies</div></div>
+          <div class="quick-card" onclick="quickAct('What business insights can you derive?')"><div class="quick-card-icon">💡</div><div class="quick-card-label">Business Insights</div></div>
+          <div class="quick-card" onclick="exportReport()"><div class="quick-card-icon">📄</div><div class="quick-card-label">Export Report</div></div>
+          <div class="quick-card" onclick="showPage('steps',document.querySelectorAll('.nav-item')[1])"><div class="quick-card-icon">🎯</div><div class="quick-card-label">5-Step Analysis</div></div>
+          <div class="quick-card" onclick="showPage('dashboard',document.querySelectorAll('.nav-item')[2])"><div class="quick-card-icon">📊</div><div class="quick-card-label">Auto Dashboard</div></div>
+        </div>
+      </div>
+      <div class="content-card" id="overviewResult" style="display:none">
+        <div class="card-title">🤖 AI Result</div>
+        <div class="ai-response" id="overviewResp"></div>
+      </div>
+    </div>
+
+    <!-- 5-STEP ANALYSIS -->
+    <div class="page" id="page-steps">
+      <div class="page-header">
+        <div class="page-title">🎯 5-Step Data Analysis</div>
+        <div class="page-subtitle">Click each step — InsightIQ performs it automatically and explains what happened!</div>
+      </div>
+      <div class="steps-container">
+        <!-- STEP TRACKER -->
+        <div class="steps-track">
+          <div class="step-item active" id="step-1-item">
+            <div class="step-circle">📂</div>
+            <div class="step-label">Step 1<br>Upload</div>
+          </div>
+          <div class="step-item" id="step-2-item">
+            <div class="step-circle">🧹</div>
+            <div class="step-label">Step 2<br>Clean</div>
+          </div>
+          <div class="step-item" id="step-3-item">
+            <div class="step-circle">📈</div>
+            <div class="step-label">Step 3<br>Analyze</div>
+          </div>
+          <div class="step-item" id="step-4-item">
+            <div class="step-circle">📊</div>
+            <div class="step-label">Step 4<br>Visualize</div>
+          </div>
+          <div class="step-item" id="step-5-item">
+            <div class="step-circle">📤</div>
+            <div class="step-label">Step 5<br>Export</div>
+          </div>
+        </div>
+
+        <!-- STEP 1: UPLOAD -->
+        <div class="step-content active" id="step-1-content">
+          <div class="step-explanation">
+            <div class="exp-title">📂 Step 1 — Upload & Preview</div>
+            Upload your CSV file using the sidebar. InsightIQ will instantly read your data, detect all columns (numeric and categorical), count rows, and show you a preview. This is where your analysis journey begins!
+          </div>
+          <div id="step1-result" class="step-result">⬅️ Upload a CSV file using the sidebar to begin!</div>
+          <br>
+          <button class="step-btn" onclick="goStep(2)" id="btn-step2" disabled>Next: Clean Data 🧹</button>
+        </div>
+
+        <!-- STEP 2: CLEAN -->
+        <div class="step-content" id="step-2-content">
+          <div class="step-explanation">
+            <div class="exp-title">🧹 Step 2 — Data Cleaning</div>
+            Raw data is almost never perfect! This step automatically scans your dataset for duplicate rows, missing/empty values, and data quality issues. Click the buttons below to fix them — InsightIQ shows you exactly what changed and why it matters for accurate analysis.
+          </div>
+          <div class="step-actions">
+            <button class="btn-warning" onclick="stepRemoveDups()">🗑️ Remove Duplicates</button>
+            <button class="btn-warning" onclick="stepFillMissing()">🔧 Fill Missing Values</button>
+            <button class="btn-success" onclick="stepCleanDone()">✅ Cleaning Done — Next Step</button>
+          </div>
+          <div id="step2-result" class="step-result">Click buttons above to clean your data!</div>
+        </div>
+
+        <!-- STEP 3: ANALYZE -->
+        <div class="step-content" id="step-3-content">
+          <div class="step-explanation">
+            <div class="exp-title">📈 Step 3 — Statistical Analysis</div>
+            Now InsightIQ digs deep into your data! It calculates mean, median, min, max, and standard deviation for every numeric column. It also detects outliers using the IQR method, finds strong correlations between columns, and identifies trends. This is what a data scientist does — but in seconds!
+          </div>
+          <button class="step-btn" onclick="runStep3()">🚀 Run Full Analysis</button>
+          <div id="step3-result" class="step-result" style="margin-top:12px;">Click button to run analysis!</div>
+        </div>
+
+        <!-- STEP 4: VISUALIZE -->
+        <div class="step-content" id="step-4-content">
+          <div class="step-explanation">
+            <div class="exp-title">📊 Step 4 — Auto Visualization</div>
+            A picture is worth a thousand rows! InsightIQ automatically selects the best chart type for each column combination — bar charts for categories, line charts for trends, pie charts for distributions. All charts are generated instantly from your cleaned data!
+          </div>
+          <button class="step-btn" onclick="runStep4()">📊 Generate All Charts</button>
+          <div id="step4-charts" style="margin-top:14px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;"></div>
+        </div>
+
+        <!-- STEP 5: EXPORT -->
+        <div class="step-content" id="step-5-content">
+          <div class="step-explanation">
+            <div class="exp-title">📤 Step 5 — Export Results</div>
+            Your analysis is complete! Now export everything — the cleaned dataset as CSV, or a full text report with all insights, statistics, trends and recommendations. Share it with your team or stakeholders with one click!
+          </div>
+          <div class="step-actions">
+            <button class="btn-success" onclick="downloadClean()">⬇️ Download Cleaned CSV</button>
+            <button class="btn-success" onclick="exportReport()">📄 Download Full Report</button>
+          </div>
+          <div class="step-result" style="margin-top:12px;">🎉 Analysis Complete! Download your results above.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div class="page" id="page-dashboard">
+      <div class="page-header">
+        <div class="page-title">📊 Auto Dashboard</div>
+        <div class="page-subtitle">Power BI-style auto-generated charts from your data</div>
+      </div>
+      <div id="dashEmpty" style="text-align:center;padding:60px;color:var(--muted);">
+        <div style="font-size:48px;margin-bottom:12px;">📂</div>
+        <div>Upload a CSV to auto-generate dashboard</div>
+      </div>
+      <div id="dashGrid" class="dash-grid" style="display:none;"></div>
+    </div>
+
+    <!-- AI INSIGHTS -->
+    <div class="page" id="page-ask">
+      <div class="page-header">
+        <div class="page-title">🤖 AI Insights</div>
+        <div class="page-subtitle">Ask anything in plain English!</div>
+      </div>
+      <div class="content-card">
+        <div class="ask-row">
+          <input class="ask-input" type="text" id="question" placeholder="e.g. What are the top 5 products by revenue?"/>
+          <button class="ask-btn" onclick="askAI()">Analyze 🔍</button>
+        </div>
+        <div class="chips">
+          <span class="chip" onclick="q('Summarize this dataset')">📋 Summarize</span>
+          <span class="chip" onclick="q('What are the key trends?')">📈 Trends</span>
+          <span class="chip" onclick="q('Which values are highest?')">🏆 Top Values</span>
+          <span class="chip" onclick="q('Any anomalies or outliers?')">⚠️ Anomalies</span>
+          <span class="chip" onclick="q('What business insights can you derive?')">💡 Business</span>
+          <span class="chip" onclick="q('Statistical summary of all columns')">🔢 Stats</span>
+          <span class="chip" onclick="q('Data quality report')">🧹 Quality</span>
+        </div>
+        <div class="thinking" id="loading">🧠 Analyzing...</div>
+        <div class="ai-response" id="aiResp"></div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="page" id="page-stats">
+      <div class="page-header"><div class="page-title">📈 Statistics</div><div class="page-subtitle">Auto-calculated stats for every column</div></div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="page" id="page-table">
+      <div class="page-header"><div class="page-title">🗂️ Data Table</div><div class="page-subtitle">Browse your raw data (first 50 rows)</div></div>
+      <div class="content-card" style="padding:0;overflow:hidden;">
+        <div class="table-wrap"><table class="data-table" id="dataTable"></table></div>
+      </div>
+    </div>
+
+    <!-- QUALITY -->
+    <div class="page" id="page-quality">
+      <div class="page-header"><div class="page-title">🧹 Data Quality</div><div class="page-subtitle">Detect and fix data issues</div></div>
+      <div class="content-card">
+        <div id="qualityContent"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;">
+          <button class="btn-warning" onclick="stepRemoveDups()">🗑️ Remove Duplicates</button>
+          <button class="btn-warning" onclick="stepFillMissing()">🔧 Fill Missing Values</button>
+          <button class="btn-success" onclick="downloadClean()">⬇️ Download Cleaned CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="page" id="page-charts">
+      <div class="page-header"><div class="page-title">📉 Custom Charts</div><div class="page-subtitle">Build any chart you want</div></div>
+      <div class="content-card">
+        <div style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:14px;align-items:center;">
+          <select class="ask-input" id="xCol" style="flex:1;min-width:120px;"></select>
+          <select class="ask-input" id="yCol" style="flex:1;min-width:120px;"></select>
+          <select class="ask-input" id="chartType" style="flex:1;min-width:120px;">
+            <option value="bar">Bar Chart</option>
+            <option value="line">Line Chart</option>
+            <option value="pie">Pie Chart</option>
+            <option value="doughnut">Doughnut</option>
+          </select>
+          <button class="ask-btn" onclick="drawChart()">Generate 📊</button>
+        </div>
+        <div style="background:#070a14;border-radius:10px;padding:16px;border:1px solid var(--border);">
+          <canvas id="myChart" style="max-height:380px;"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- MEMORY -->
+    <div class="page" id="page-memory">
+      <div class="page-header"><div class="page-title">🧠 Memory (Parcle)</div><div class="page-subtitle">Every analysis remembered — even next session!</div></div>
+      <div class="content-card">
+        <button class="btn-primary" onclick="loadMemory()" style="margin-bottom:14px;">🔄 Load Past Analyses</button>
+        <div id="memLog"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- AI CHAT BUBBLE -->
+<div class="chat-bubble">
+  <div class="chat-window" id="chatWindow">
+    <div class="chat-header">
+      <div>
+        <div class="chat-header-title">⚡ InsightIQ Assistant</div>
+        <div class="chat-header-sub">Ask anything about your data!</div>
+      </div>
+    </div>
+    <div class="chat-suggestions">
+      <span class="chat-chip" onclick="chatSend('Show top values')">Top values</span>
+      <span class="chat-chip" onclick="chatSend('Find outliers')">Find outliers</span>
+      <span class="chat-chip" onclick="chatSend('Summarize data')">Summarize</span>
+      <span class="chat-chip" onclick="chatSend('Business insights')">Business insights</span>
+    </div>
+    <div class="chat-messages" id="chatMessages">
+      <div class="chat-msg bot">👋 Hi! I'm InsightIQ. Upload a CSV and ask me anything about your data!</div>
+    </div>
+    <div class="chat-input-row">
+      <input class="chat-input" type="text" id="chatInput" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')chatSend()"/>
+      <button class="chat-send" onclick="chatSend()">➤</button>
+    </div>
+  </div>
+  <button class="chat-toggle" onclick="toggleChat()">💬</button>
+</div>
+
+<footer>⚡ InsightIQ &nbsp;|&nbsp; Parcle Memory + Chart.js &nbsp;|&nbsp; Quackathon 2026 — Track 01: Sentient Workspace</footer>
+
+<script>
+let csvData=[],csvHeaders=[],chart=null,dashCharts=[],step4Charts=[],PARCLE_KEY='',USER_ID='',currentStep=1;
+const COLORS=['#6c63ff','#00d4aa','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#10b981','#f97316','#ec4899','#14b8a6'];
+
+function saveKeys(){
+  PARCLE_KEY=document.getElementById('parcleKey').value.trim();
+  USER_ID=document.getElementById('userId').value.trim()||'user';
+  const s=document.getElementById('keyStatus');
+  s.textContent='✅ Connected!';s.style.color='#10b981';
+}
+
+function showPage(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  if(el)el.classList.add('active');
+}
+
+function toggleChat(){
+  const w=document.getElementById('chatWindow');
+  w.classList.toggle('open');
+}
+
+// CSV UPLOAD
+document.getElementById('csvFile').addEventListener('change',function(e){
+  const file=e.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=function(ev){parseCSV(ev.target.result,file.name);};
+  reader.readAsText(file);
+});
+
+function parseCSV(text,fname){
+  const lines=text.trim().split('\n');
+  csvHeaders=lines[0].split(',').map(h=>h.trim().replace(/"/g,''));
+  csvData=[];
+  for(let i=1;i<lines.length;i++){
+    const vals=lines[i].split(',').map(v=>v.trim().replace(/"/g,''));
+    if(vals.length===csvHeaders.length){const row={};csvHeaders.forEach((h,j)=>{row[h]=vals[j];});csvData.push(row);}
+  }
+  document.getElementById('fileInfo').style.display='block';
+  document.getElementById('fileName').textContent='📄 '+fname;
+  document.getElementById('fileMeta').textContent=csvData.length+' rows • '+csvHeaders.length+' cols';
+  document.getElementById('statusText').textContent=csvData.length+' rows loaded ✅';
+  updateMetrics();buildStats();buildTable();buildQuality();buildDashboard();fillDropdowns();
+  // Step 1 result
+  document.getElementById('step1-result').textContent=`✅ File loaded successfully!\n\n📋 Rows: ${csvData.length}\n📊 Columns: ${csvHeaders.length}\n🔤 Column Names: ${csvHeaders.join(', ')}\n\n💡 InsightIQ detected ${getNumCols().length} numeric columns and ${getTxtCols().length} categorical columns.\n\nYou're ready for Step 2 — Data Cleaning!`;
+  document.getElementById('btn-step2').disabled=false;
+  markStepDone(1);
+  // Save to localStorage
+  localStorage.setItem('insightiq_data',JSON.stringify({headers:csvHeaders,data:csvData,fname}));
+}
+
+function getNumCols(){return csvHeaders.filter(h=>csvData.slice(0,20).some(r=>r[h]&&!isNaN(parseFloat(r[h]))));}
+function getTxtCols(){return csvHeaders.filter(h=>!getNumCols().includes(h));}
+
+function getStats(){
+  const s={};
+  getNumCols().forEach(col=>{
+    const vals=csvData.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));
+    if(!vals.length)return;
+    const avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const sorted=[...vals].sort((a,b)=>a-b);
+    const q1=sorted[Math.floor(sorted.length*0.25)];
+    const q3=sorted[Math.floor(sorted.length*0.75)];
+    const iqr=q3-q1;
+    s[col]={vals,min:Math.min(...vals),max:Math.max(...vals),avg,sum:vals.reduce((a,b)=>a+b,0),median:sorted[Math.floor(sorted.length/2)],std:Math.sqrt(vals.map(v=>Math.pow(v-avg,2)).reduce((a,b)=>a+b,0)/vals.length),count:vals.length,outliers:vals.filter(v=>v<q1-1.5*iqr||v>q3+1.5*iqr)};
+  });
+  return s;
+}
+
+function updateMetrics(){
+  const missing=csvHeaders.reduce((t,col)=>t+csvData.filter(r=>!r[col]||r[col].trim()==='').length,0);
+  const dups=csvData.length-new Set(csvData.map(r=>JSON.stringify(r))).size;
+  document.getElementById('m-rows').textContent=csvData.length;
+  document.getElementById('m-cols').textContent=csvHeaders.length;
+  document.getElementById('m-missing').textContent=missing;
+  document.getElementById('m-dups').textContent=dups;
+}
+
+function buildStats(){
+  const stats=getStats();const numCols=getNumCols();const txtCols=getTxtCols();
+  let html='';
+  numCols.forEach(col=>{
+    if(!stats[col])return;
+    const s=stats[col];
+    html+=`<div class="stat-card"><div class="stat-col">📊 ${col}</div>
+      <div class="stat-row"><span class="stat-k">Average</span><span class="stat-v">${s.avg.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-k">Median</span><span class="stat-v">${s.median.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-k">Min</span><span class="stat-v">${s.min.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-k">Max</span><span class="stat-v">${s.max.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-k">Std Dev</span><span class="stat-v">${s.std.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-k">Total</span><span class="stat-v">${s.sum.toFixed(2)}</span></div>
+      <div class="stat-row"><span class="stat-k">Outliers</span><span class="stat-v" style="color:${s.outliers.length?'var(--danger)':'var(--success)'}">${s.outliers.length}</span></div>
+    </div>`;
+  });
+  txtCols.forEach(col=>{
+    const freq={};csvData.forEach(r=>{if(r[col])freq[r[col]]=(freq[r[col]]||0)+1;});
+    const top=Object.entries(freq).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    html+=`<div class="stat-card"><div class="stat-col">📝 ${col}</div>
+      <div class="stat-row"><span class="stat-k">Unique</span><span class="stat-v">${Object.keys(freq).length}</span></div>
+      ${top.map(([v,c])=>`<div class="stat-row"><span class="stat-k">${v}</span><span class="stat-v">${c}</span></div>`).join('')}
+    </div>`;
+  });
+  document.getElementById('statsGrid').innerHTML=html||'<p style="color:var(--muted)">Upload CSV to see statistics</p>';
+}
+
+function buildTable(){
+  let html='<thead><tr>'+csvHeaders.map(h=>`<th>${h}</th>`).join('')+'</tr></thead><tbody>';
+  csvData.slice(0,50).forEach(r=>{html+='<tr>'+csvHeaders.map(h=>`<td>${r[h]||'-'}</td>`).join('')+'</tr>';});
+  document.getElementById('dataTable').innerHTML=html+'</tbody>';
+}
+
+function buildQuality(){
+  const missing=csvHeaders.reduce((t,col)=>t+csvData.filter(r=>!r[col]||r[col].trim()==='').length,0);
+  const dups=csvData.length-new Set(csvData.map(r=>JSON.stringify(r))).size;
+  let html=`
+    <div class="quality-item"><span class="q-label">📋 Total Rows</span><span class="q-badge ok">${csvData.length}</span></div>
+    <div class="quality-item"><span class="q-label">📊 Columns</span><span class="q-badge ok">${csvHeaders.length}</span></div>
+    <div class="quality-item"><span class="q-label">🔄 Duplicates</span><span class="q-badge ${dups>0?'warn':'ok'}">${dups===0?'✅ None':dups+' found'}</span></div>
+    <div class="quality-item"><span class="q-label">⚠️ Missing Values</span><span class="q-badge ${missing>0?'warn':'ok'}">${missing===0?'✅ None':missing+' cells'}</span></div>`;
+  csvHeaders.forEach(col=>{
+    const m=csvData.filter(r=>!r[col]||r[col].trim()==='').length;
+    html+=`<div class="quality-item"><span class="q-label">• ${col}</span><span class="q-badge ${m>0?'warn':'ok'}">${m===0?'✅ Complete':m+' missing'}</span></div>`;
+  });
+  document.getElementById('qualityContent').innerHTML=html;
+}
+
+function buildDashboard(){
+  const numCols=getNumCols();const txtCols=getTxtCols();
+  dashCharts.forEach(c=>c.destroy());dashCharts=[];
+  if(!numCols.length&&!txtCols.length)return;
+  document.getElementById('dashEmpty').style.display='none';
+  const grid=document.getElementById('dashGrid');
+  grid.style.display='grid';grid.innerHTML='';
+  const combos=[];
+  txtCols.slice(0,2).forEach(tc=>{numCols.slice(0,2).forEach(nc=>{combos.push({x:tc,y:nc,type:'bar'});});});
+  if(numCols.length>=2)combos.push({x:numCols[0],y:numCols[1],type:'line'});
+  if(txtCols.length)combos.push({x:txtCols[0],y:numCols[0],type:'pie'});
+  combos.slice(0,4).forEach((c,i)=>{
+    const id='dc'+i;
+    const div=document.createElement('div');
+    div.className='dash-card';
+    div.innerHTML=`<div class="dash-title">${c.y} by ${c.x}</div><canvas id="${id}" style="max-height:200px;"></canvas>`;
+    grid.appendChild(div);
+    const labels=csvData.slice(0,15).map(r=>r[c.x]);
+    const values=csvData.slice(0,15).map(r=>{const v=parseFloat(r[c.y]);return isNaN(v)?0:v;});
+    const ch=new Chart(document.getElementById(id).getContext('2d'),{
+      type:c.type,
+      data:{labels,datasets:[{label:c.y,data:values,backgroundColor:COLORS,borderColor:c.type==='line'?'#6c63ff':COLORS,borderWidth:c.type==='line'?2:1,tension:0.4}]},
+      options:{responsive:true,plugins:{legend:{display:c.type==='pie',labels:{color:'#9ca3af',font:{size:10}}}},scales:c.type==='pie'?{}:{x:{ticks:{color:'#6b7280',font:{size:10}},grid:{color:'#1e2340'}},y:{ticks:{color:'#6b7280',font:{size:10}},grid:{color:'#1e2340'}}}}
+    });
+    dashCharts.push(ch);
+  });
+}
+
+function fillDropdowns(){
+  const x=document.getElementById('xCol'),y=document.getElementById('yCol');
+  x.innerHTML=csvHeaders.map(h=>`<option value="${h}">${h}</option>`).join('');
+  y.innerHTML=csvHeaders.map(h=>`<option value="${h}">${h}</option>`).join('');
+  const nc=getNumCols();if(nc.length)y.value=nc[0];
+}
+
+// STEP FUNCTIONS
+function markStepDone(n){
+  document.getElementById('step-'+n+'-item').classList.add('done');
+}
+
+function goStep(n){
+  document.querySelectorAll('.step-content').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.step-item').forEach(s=>s.classList.remove('active'));
+  document.getElementById('step-'+n+'-content').classList.add('active');
+  document.getElementById('step-'+n+'-item').classList.add('active');
+  currentStep=n;
+}
+
+function stepRemoveDups(){
+  if(!csvData.length){alert('Upload CSV first!');return;}
+  const before=csvData.length;const seen=new Set();
+  csvData=csvData.filter(r=>{const k=JSON.stringify(r);if(seen.has(k))return false;seen.add(k);return true;});
+  const removed=before-csvData.length;
+  document.getElementById('step2-result').textContent=`✅ Duplicate Removal Complete!\n\n• Rows before: ${before}\n• Duplicates removed: ${removed}\n• Rows after: ${csvData.length}\n\n💡 Why it matters: Duplicate rows can skew your analysis by double-counting data points, leading to incorrect averages and totals.`;
+  buildQuality();updateMetrics();
+}
+
+function stepFillMissing(){
+  if(!csvData.length){alert('Upload CSV first!');return;}
+  const nc=getNumCols();let filled=0;
+  csvHeaders.forEach(col=>{
+    if(nc.includes(col)){const v=csvData.map(r=>parseFloat(r[col])).filter(v=>!isNaN(v));const avg=(v.reduce((a,b)=>a+b,0)/v.length).toFixed(2);csvData.forEach(r=>{if(!r[col]||r[col].trim()===''){r[col]=avg;filled++;}});}
+    else csvData.forEach(r=>{if(!r[col]||r[col].trim()===''){r[col]='N/A';filled++;}});
+  });
+  document.getElementById('step2-result').textContent=`✅ Missing Values Filled!\n\n• Cells filled: ${filled}\n• Numeric columns: filled with column average\n• Text columns: filled with 'N/A'\n\n💡 Why it matters: Missing values cause errors in calculations. Filling with averages preserves statistical properties of your data.`;
+  buildQuality();updateMetrics();
+}
+
+function stepCleanDone(){markStepDone(2);goStep(3);}
+
+function runStep3(){
+  if(!csvData.length){alert('Upload CSV first!');return;}
+  const stats=getStats();const numCols=getNumCols();const txtCols=getTxtCols();
+  let result=`✅ STATISTICAL ANALYSIS COMPLETE!\n${'─'.repeat(40)}\n\n`;
+  numCols.forEach(col=>{
+    if(!stats[col])return;
+    const s=stats[col];
+    result+=`📊 ${col}:\n  Average: ${s.avg.toFixed(2)} | Median: ${s.median.toFixed(2)}\n  Min: ${s.min.toFixed(2)} | Max: ${s.max.toFixed(2)} | Std Dev: ${s.std.toFixed(2)}\n  Outliers: ${s.outliers.length===0?'✅ None':s.outliers.length+' detected!'}\n\n`;
+  });
+  const txtCounts={};
+  txtCols.forEach(col=>{const f={};csvData.forEach(r=>{if(r[col])f[r[col]]=(f[r[col]]||0)+1;});const top=Object.entries(f).sort((a,b)=>b[1]-a[1]).slice(0,3);txtCounts[col]=top;result+=`📝 ${col}: ${Object.keys(f).length} unique values. Top: ${top.map(([v,c])=>`${v}(${c})`).join(', ')}\n`;});
+  result+=`\n💡 KEY INSIGHT: Your dataset has ${csvData.length} records with ${numCols.length} measurable KPIs and ${txtCols.length} categorical dimensions.`;
+  document.getElementById('step3-result').textContent=result;
+  markStepDone(3);
+  setTimeout(()=>goStep(4),500);
+}
+
+function runStep4(){
+  if(!csvData.length){alert('Upload CSV first!');return;}
+  const numCols=getNumCols();const txtCols=getTxtCols();
+  step4Charts.forEach(c=>c.destroy());step4Charts=[];
+  const container=document.getElementById('step4-charts');container.innerHTML='';
+  const combos=[];
+  txtCols.slice(0,2).forEach(tc=>{numCols.slice(0,1).forEach(nc=>{combos.push({x:tc,y:nc,type:'bar'});});});
+  if(numCols.length>=2)combos.push({x:numCols[0],y:numCols[1],type:'line'});
+  if(txtCols.length&&numCols.length)combos.push({x:txtCols[0],y:numCols[0],type:'pie'});
+  combos.slice(0,4).forEach((c,i)=>{
+    const id='s4c'+i;
+    const div=document.createElement('div');
+    div.style.cssText='background:#0f1224;border:1px solid #1e2340;border-radius:10px;padding:14px;';
+    div.innerHTML=`<div style="font-size:11px;color:#6b7280;margin-bottom:8px;font-weight:600;">${c.type.toUpperCase()}: ${c.y} by ${c.x}</div><canvas id="${id}" style="max-height:180px;"></canvas>`;
+    container.appendChild(div);
+    const labels=csvData.slice(0,12).map(r=>r[c.x]);
+    const values=csvData.slice(0,12).map(r=>{const v=parseFloat(r[c.y]);return isNaN(v)?0:v;});
+    const ch=new Chart(document.getElementById(id).getContext('2d'),{
+      type:c.type,
+      data:{labels,datasets:[{label:c.y,data:values,backgroundColor:COLORS,borderColor:c.type==='line'?'#6c63ff':COLORS,borderWidth:c.type==='line'?2:1,tension:0.4}]},
+      options:{responsive:true,plugins:{legend:{display:c.type==='pie',labels:{color:'#9ca3af',font:{size:9}}}},scales:c.type==='pie'?{}:{x:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#1e2340'}},y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#1e2340'}}}}
+    });
+    step4Charts.push(ch);
+  });
+  markStepDone(4);
+  setTimeout(()=>goStep(5),500);
+}
+
+// AI ANALYSIS
+function analyzeData(question){
+  if(!csvData.length)return'⬅️ Please upload a CSV file first!';
+  const stats=getStats();const numCols=getNumCols();const txtCols=getTxtCols();const ql=question.toLowerCase();
+  const counts={};txtCols.forEach(col=>{const f={};csvData.forEach(r=>{if(r[col])f[r[col]]=(f[r[col]]||0)+1;});counts[col]=Object.entries(f).sort((a,b)=>b[1]-a[1]).slice(0,5);});
+  let r='';
+  if(ql.includes('summar')||ql.includes('overview')){
+    r=`📊 DATASET SUMMARY\n${'─'.repeat(35)}\n• Rows: ${csvData.length} | Columns: ${csvHeaders.length}\n• Columns: ${csvHeaders.join(', ')}\n\n`;
+    if(numCols.length){r+=`📈 NUMERIC:\n`;numCols.forEach(c=>{if(stats[c])r+=`• ${c}: Avg=${stats[c].avg.toFixed(2)}, Min=${stats[c].min.toFixed(2)}, Max=${stats[c].max.toFixed(2)}\n`;});}
+    if(txtCols.length){r+=`\n📝 CATEGORICAL:\n`;txtCols.forEach(c=>{if(counts[c]&&counts[c].length)r+=`• ${c}: Top="${counts[c][0][0]}" (${counts[c][0][1]} records)\n`;});}
+  }else if(ql.includes('trend')){
+    r=`📈 TREND ANALYSIS\n${'─'.repeat(35)}\n`;
+    numCols.forEach(c=>{if(stats[c]){const v=stats[c].vals;const h1=v.slice(0,Math.floor(v.length/2));const h2=v.slice(Math.floor(v.length/2));const a1=h1.reduce((a,b)=>a+b,0)/h1.length;const a2=h2.reduce((a,b)=>a+b,0)/h2.length;r+=`\n• ${c}: ${a2>a1?'📈 INCREASING':'📉 DECREASING'}\n  ${a1.toFixed(2)} → ${a2.toFixed(2)} (${(((a2-a1)/a1)*100).toFixed(1)}% change)\n`;}});
+  }else if(ql.includes('top')||ql.includes('highest')){
+    r=`🏆 TOP VALUES\n${'─'.repeat(35)}\n`;
+    numCols.forEach(c=>{if(stats[c])r+=`• ${c}: Max=${stats[c].max.toFixed(2)}, Avg=${stats[c].avg.toFixed(2)}, Total=${stats[c].sum.toFixed(2)}\n`;});
+    txtCols.forEach(c=>{if(counts[c]&&counts[c].length){r+=`\nTop ${c}s:\n`;counts[c].forEach(([v,cnt],i)=>{r+=`  ${i+1}. ${v} — ${cnt} records (${((cnt/csvData.length)*100).toFixed(1)}%)\n`;});}});
+  }else if(ql.includes('anomal')||ql.includes('outlier')){
+    r=`⚠️ ANOMALY DETECTION\n${'─'.repeat(35)}\n`;
+    numCols.forEach(c=>{if(stats[c]){r+=`• ${c}: ${stats[c].outliers.length===0?'✅ No outliers':'⚠️ '+stats[c].outliers.length+' outliers: '+stats[c].outliers.slice(0,3).map(v=>v.toFixed(2)).join(', ')}\n`;}});
+  }else if(ql.includes('business')||ql.includes('insight')){
+    r=`💡 BUSINESS INSIGHTS\n${'─'.repeat(35)}\n`;
+    numCols.forEach(c=>{if(stats[c])r+=`• ${c}: Range ${stats[c].min.toFixed(2)}–${stats[c].max.toFixed(2)}, Total=${stats[c].sum.toFixed(2)}\n`;});
+    txtCols.forEach(c=>{if(counts[c]&&counts[c].length)r+=`• "${counts[c][0][0]}" leads in ${c} (${((counts[c][0][1]/csvData.length)*100).toFixed(1)}% share)\n`;});
+    r+=`\n📌 RECOMMENDATION: Dataset has ${csvData.length} records with ${numCols.length} KPIs. Focus on top performers!`;
+  }else if(ql.includes('quality')||ql.includes('missing')||ql.includes('clean')){
+    const missing=csvHeaders.reduce((t,col)=>t+csvData.filter(r=>!r[col]||r[col].trim()==='').length,0);
+    const dups=csvData.length-new Set(csvData.map(r=>JSON.stringify(r))).size;
+    r=`🧹 DATA QUALITY\n${'─'.repeat(35)}\n• Missing: ${missing} | Duplicates: ${dups}\n`;
+    csvHeaders.forEach(col=>{const m=csvData.filter(r=>!r[col]||r[col].trim()==='').length;r+=`• ${col}: ${m===0?'✅':'❌ '+m+' missing'}\n`;});
+  }else if(ql.includes('stat')||ql.includes('average')||ql.includes('mean')){
+    r=`🔢 STATISTICS\n${'─'.repeat(35)}\n`;
+    numCols.forEach(c=>{if(stats[c])r+=`• ${c}: Avg=${stats[c].avg.toFixed(2)}, Med=${stats[c].median.toFixed(2)}, Std=${stats[c].std.toFixed(2)}\n`;});
+  }else{
+    r=`🔍 "${question}"\n${'─'.repeat(35)}\n`;
+    if(numCols.length){r+=`📈 Numbers:\n`;numCols.forEach(c=>{if(stats[c])r+=`• ${c}: Avg=${stats[c].avg.toFixed(2)}, Max=${stats[c].max.toFixed(2)}\n`;});}
+    if(txtCols.length){r+=`\n📝 Categories:\n`;txtCols.forEach(c=>{if(counts[c]&&counts[c].length)r+=`• ${c}: Top="${counts[c][0][0]}"\n`;});}
+    r+=`\n💡 Try: Summarize, Trends, Top Values, Anomalies, Business Insights!`;
+  }
+  return r;
+}
+
+function q(question){document.getElementById('question').value=question;askAI();}
+function quickAct(question){
+  document.getElementById('overviewResult').style.display='block';
+  document.getElementById('overviewResp').textContent='🧠 Analyzing...';
+  setTimeout(()=>{const ans=analyzeData(question);document.getElementById('overviewResp').textContent=ans;saveMem(question,ans);},600);
+}
+async function askAI(){
+  const question=document.getElementById('question').value.trim();
+  if(!question){alert('Type a question!');return;}
+  document.getElementById('loading').style.display='block';
+  document.getElementById('aiResp').textContent='';
+  await new Promise(r=>setTimeout(r,600));
+  const ans=analyzeData(question);
+  document.getElementById('loading').style.display='none';
+  document.getElementById('aiResp').textContent=ans;
+  saveMem(question,ans);
+}
+
+// CHAT
+function chatSend(msg){
+  const input=document.getElementById('chatInput');
+  const message=msg||input.value.trim();
+  if(!message)return;
+  const msgs=document.getElementById('chatMessages');
+  msgs.innerHTML+=`<div class="chat-msg user">${message}</div>`;
+  input.value='';
+  setTimeout(()=>{
+    const ans=analyzeData(message);
+    const short=ans.substring(0,300)+(ans.length>300?'...':'');
+    msgs.innerHTML+=`<div class="chat-msg bot">${short}</div>`;
+    msgs.scrollTop=msgs.scrollHeight;
+    saveMem(message,ans);
+  },600);
+  msgs.scrollTop=msgs.scrollHeight;
+}
+
+// MEMORY
+function saveMem(q,a){
+  const mem={question:q,answer:a.substring(0,500),timestamp:new Date().toISOString(),csvInfo:csvHeaders.length?`${csvHeaders.join(', ')} (${csvData.length} rows)`:''};
+  const arr=JSON.parse(localStorage.getItem('iq_mem')||'[]');arr.unshift(mem);localStorage.setItem('iq_mem',JSON.stringify(arr.slice(0,20)));
+  if(!PARCLE_KEY)return;
+  fetch('https://api.parcle.ai/v1/memory',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${PARCLE_KEY}`},body:JSON.stringify({user_id:USER_ID,content:JSON.stringify(mem),metadata:{source:'InsightIQ'}})}).catch(()=>{});
+}
+async function loadMemory(){
+  const c=document.getElementById('memLog');c.innerHTML='<p style="color:var(--muted)">🔄 Loading...</p>';
+  let mems=[];
+  if(PARCLE_KEY){try{const r=await fetch(`https://api.parcle.ai/v1/memory?user_id=${USER_ID}`,{headers:{'Authorization':`Bearer ${PARCLE_KEY}`}});const d=await r.json();if(d.memories&&d.memories.length)mems=d.memories.map(m=>JSON.parse(m.content));}catch(e){}}
+  if(!mems.length)mems=JSON.parse(localStorage.getItem('iq_mem')||'[]');
+  if(!mems.length){c.innerHTML='<p style="color:var(--muted)">No past analyses yet!</p>';return;}
+  c.innerHTML=`<p style="color:var(--success);font-size:12px;margin-bottom:10px;">🧠 ${mems.length} past analyses found!</p>`+
+    mems.slice(0,10).map(m=>`<div class="mem-item"><div class="mem-q">❓ ${m.question}</div><div class="mem-a">${(m.answer||'').substring(0,200)}...</div><div class="mem-t">📅 ${m.timestamp?new Date(m.timestamp).toLocaleString():''}</div></div>`).join('');
+}
+
+// EXPORT
+function downloadClean(){
+  if(!csvData.length){alert('Upload CSV first!');return;}
+  const csv=[csvHeaders.join(','),...csvData.map(r=>csvHeaders.map(h=>r[h]||'').join(','))].join('\n');
+  const b=new Blob([csv],{type:'text/csv'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='cleaned_data.csv';a.click();
+}
+function exportReport(){
+  if(!csvData.length){alert('Upload CSV first!');return;}
+  const qs=['Summarize this dataset','What are the key trends?','Which values are highest?','Are there any anomalies?','What business insights can you derive?','Data quality report'];
+  let rep=`INSIGHTIQ FULL ANALYSIS REPORT\n${'='.repeat(50)}\nGenerated: ${new Date().toLocaleString()}\nDataset: ${csvData.length} rows, ${csvHeaders.length} columns\nColumns: ${csvHeaders.join(', ')}\n\n`;
+  qs.forEach(q=>{rep+=analyzeData(q)+'\n\n'+'='.repeat(50)+'\n\n';});
+  const b=new Blob([rep],{type:'text/plain'});const u=URL.createObjectURL(b);const a=document.createElement('a');a.href=u;a.download='InsightIQ_Report.txt';a.click();
+}
+
+// CUSTOM CHART
+function drawChart(){
+  const xC=document.getElementById('xCol').value,yC=document.getElementById('yCol').value,type=document.getElementById('chartType').value;
+  const labels=csvData.slice(0,20).map(r=>r[xC]);
+  const values=csvData.slice(0,20).map(r=>{const v=parseFloat(r[yC]);return isNaN(v)?0:v;});
+  if(chart)chart.destroy();
+  chart=new Chart(document.getElementById('myChart').getContext('2d'),{
+    type,data:{labels,datasets:[{label:`${yC} by ${xC}`,data:values,backgroundColor:COLORS,borderColor:type==='line'?'#6c63ff':COLORS,borderWidth:type==='line'?2:1,tension:0.4}]},
+    options:{responsive:true,plugins:{legend:{labels:{color:'#9ca3af'}}},scales:type==='pie'||type==='doughnut'?{}:{x:{ticks:{color:'#6b7280'},grid:{color:'#1e2340'}},y:{ticks:{color:'#6b7280'},grid:{color:'#1e2340'}}}}
+  });
+}
+
+// RESTORE SESSION
+const saved=localStorage.getItem('insightiq_data');
+if(saved){
+  try{
+    const {headers,data,fname}=JSON.parse(saved);
+    csvHeaders=headers;csvData=data;
+    document.getElementById('fileInfo').style.display='block';
+    document.getElementById('fileName').textContent='📄 '+fname+' (restored)';
+    document.getElementById('fileMeta').textContent=data.length+' rows • '+headers.length+' cols';
+    document.getElementById('statusText').textContent='Session restored ✅';
+    updateMetrics();buildStats();buildTable();buildQuality();buildDashboard();fillDropdowns();
+    document.getElementById('step1-result').textContent=`✅ Session restored!\n\nFile: ${fname}\nRows: ${data.length} | Columns: ${headers.length}\n\n💡 Your previous session data has been loaded automatically!`;
+    document.getElementById('btn-step2').disabled=false;
+    markStepDone(1);
+    const chatMsgs=document.getElementById('chatMessages');
+    chatMsgs.innerHTML+=`<div class="chat-msg bot">👋 Welcome back! I restored your last dataset (${data.length} rows). Ask me anything!</div>`;
+  }catch(e){}
+}
+</script>
+</body>
+</html>
